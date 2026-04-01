@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Мастер-классы — интерактивное расписание</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <div class="hero-top">
+        <div class="hero-copy">
+          <div class="eyebrow">Интерактивное расписание</div>
+          <h1>Мастер-классы</h1>
+        </div>
+        <div class="hero-logo-wrap">
+          <div class="hero-logo-card">
+            <img class="hero-logo" src="logo_stroitel_budushchego.svg" alt="Строитель будущего" />
+          </div>
+        </div>
+      </div>
+      <div class="mini-grid" id="globalStats">
+<div class="mini-card">
+  <div class="label">Дней в расписании</div>
+  <strong>5</strong>
+</div>
+<div class="mini-card">
+  <div class="label">Всего карточек активностей</div>
+  <strong>127</strong>
+</div>
+<div class="mini-card">
+  <div class="label">Временных слотов</div>
+  <strong>29</strong>
+</div>
+<div class="mini-card">
+  <div class="label">Аудитория</div>
+  <strong style="font-size:1.05rem; line-height:1.3">Школьники • Техникум</strong>
+</div>
+</div>
+    </section>
+
+    <section class="controls">
+      <div class="panel">
+        <h2>Выберите день</h2>
+        <div class="day-tabs" id="dayTabs"><button class="active" data-day-index="0">6 апреля</button><button class="" data-day-index="1">7 апреля</button><button class="" data-day-index="2">8 апреля</button><button class="" data-day-index="3">9 апреля</button><button class="" data-day-index="4">10 апреля</button></div>
+      </div>
+      <div class="panel">
+        <h2>Поиск и фильтры</h2>
+        <div class="search-wrap">
+          <label class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"></circle>
+              <path d="M20 20l-3.5-3.5"></path>
+            </svg>
+            <input id="searchInput" type="search" placeholder="Например: мост, экскурсия, ОКО, группа 5" />
+          </label>
+          <div class="filters" id="kindFilters"><button class="active" data-kind="all">Все</button><button class="" data-kind="Регистрация">Регистрация</button><button class="" data-kind="Открытие">Открытие</button><button class="" data-kind="Площадка">Площадки</button><button class="" data-kind="Перерыв">Перерыв</button><button class="" data-kind="Экскурсия">Экскурсии</button><button class="" data-kind="Квест">Квест</button><button class="" data-kind="Активность">Другое</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="main-panel">
+      <div class="day-head">
+        <div>
+          <h2 id="dayTitle">6 апреля</h2>
+        </div>
+        <div class="audience-badge" id="audienceBadge">Школьники</div>
+      </div>
+
+      <div class="day-summary" id="daySummary">
+<div class="summary-chip"><strong>Школьники</strong><span>Аудитория дня</span></div>
+<div class="summary-chip"><strong>26</strong><span>Активностей по текущим фильтрам</span></div>
+<div class="summary-chip"><strong>6</strong><span>Временных блоков</span></div>
+<div class="summary-chip"><strong>08:30-09:00</strong><span>Старт дня</span></div>
+<div class="summary-chip"><strong>12:20-13:20</strong><span>Последний слот</span></div>
+</div>
+      <div class="timeline" id="timeline"><section class="slot">
+      <aside class="slot-time">
+        <span class="time">08:30-09:00</span>
+        <span class="count">1 активность</span>
+      </aside>
+      <div class="cards"><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Регистрация</span></div></div>
+      <h3>Регистрация участников форума</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Холл 1 корпуса ННГАСУ, ул. Ильинская, 65</span></li></ul></div></div>
+    </article></div>
+    </section><section class="slot">
+      <aside class="slot-time">
+        <span class="time">09:00-09:30</span>
+        <span class="count">1 активность</span>
+      </aside>
+      <div class="cards"><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Открытие</span></div></div>
+      <h3>Открытие форума. &quot;Роль строительной отрасли в развитие страны&quot;</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Трансляция в аудитории 228<br>(II корпус)</span></li><li><span>Актовый зал<br>(I корпус)</span></li></ul></div></div>
+    </article></div>
+    </section><section class="slot">
+      <aside class="slot-time">
+        <span class="time">09:30-10:30</span>
+        <span class="count">10 активностей</span>
+      </aside>
+      <div class="cards"><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №1</span></div></div>
+      <h3>ПОСТРОЙ СВОЙ ВЫСОТНЫЙ ДОМ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Хряпченкова Ирина Николаевна</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 6-606, цоколь 6 корпуса</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 1</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №2</span></div></div>
+      <h3>УНИКАЛЬНЫЕ ЗДАНИЯ В РОССИИ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Помазов Артем Павлович</span></li><li><span>СТУДЕНЧЕСКИЙ КВАРТАЛ</span></li><li><span>Лазарева Анастасия Владимировна</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 1-110</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 2</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №3</span></div></div>
+      <h3>ДЕЛОВАЯ ИГРА &quot;Тендер: Битва за объект&quot; от СНО И СМУ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Ситникова Анна Константиновна</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория Точка Урбан 1,0</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 3</span><span class="group-chip">Группа 4</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №4</span></div></div>
+      <h3>ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Гордеев Алексей Владимирович, Васильев Алексей Львович</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 2-221, 2-223, 1-002, 1-004</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 5</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №5</span></div></div>
+      <h3>СТАНЬ ЛАНДШАФТНЫМ АРХИТЕКТОРОМ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Лаврова Ольга Петровна</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 4 этаж библиотеки</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 6</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №6</span></div></div>
+      <h3>ДОВЕРЯЙ, НО ПРОВЕРЯЙ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Любимцева Ольга Львовна, Урявина Людмила Владимировна</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 3-509</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 7</span><span class="group-chip">Группа 8</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №7</span></div></div>
+      <h3>СТУДЕНЧЕСКИЙ КВАРТАЛ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Лазарева Анастасия Владимировна</span></li><li><span>ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ</span></li><li><span>Козлов Евгений Сергеевич</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>5 корпус, 8 корпус</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 9</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №8</span></div></div>
+      <h3>КАК СДЕЛАТЬ ПРАВИЛЬНЫЙ ВЫБОР АО &quot;ОКО&quot;</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 2-228</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 10</span><span class="group-chip">Группа 11</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №9</span></div></div>
+      <h3>БЕЗОПАСНО ОБ ОПАСНОМ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Макаров Павел Вячеславович, Котик Виталий Сергеевич</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 1-401в</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 12</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №10</span></div></div>
+      <h3>ПОСМОТРИ НА ЗЕМЛЮ С ВЫСОТЫ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Чечин Андрей Вячепславович</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 5-403</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 13</span></div></div></div>
+    </article></div>
+    </section><section class="slot">
+      <aside class="slot-time">
+        <span class="time">10:30-11:00</span>
+        <span class="count">1 активность</span>
+      </aside>
+      <div class="cards"><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Перерыв</span></div></div>
+      <h3>Чайная пауза</h3>
+      <div class="meta"></div>
+    </article></div>
+    </section><section class="slot">
+      <aside class="slot-time">
+        <span class="time">11:10-12:10</span>
+        <span class="count">11 активностей</span>
+      </aside>
+      <div class="cards"><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №11</span></div></div>
+      <h3>ДЕЛОВАЯ ИГРА ОТ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>МИНГРАД НИЖЕГОРОДСКОЙ ОБЛАСТИ</span></li><li><span>Яковлев Василий Владимирович</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 2-327</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 1</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №12</span></div></div>
+      <h3>ДЕЛОВАЯ ИГРА ОТ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>МИНГРАД НИЖЕГОРОДСКОЙ ОБЛАСТИ</span></li><li><span>Яковлев Василий Владимирович</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 2-327</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 2</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Экскурсия</span><span class="badge">Группа 3</span></div></div>
+      <h3>Экскурсия на строительный объект</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>ОЗСК</span></li></ul></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Экскурсия</span><span class="badge">Группа 4</span></div></div>
+      <h3>Экскурсия на строительный объект</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Ледовая арена</span></li></ul></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №4</span></div></div>
+      <h3>ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Козлов Евгений Сергеевич</span></li></ul></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №13</span></div></div>
+      <h3>СТРОИМ ЗДАНИЕ С ВЕТЕРКОМ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Хазов Павел Алексеевич</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 2-327</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 6</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №14</span></div></div>
+      <h3>ДЕЛАЙ. ИЗМЕРЬ. ОЦЕНИ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Любимцева Ольга Львовна, Урявина Людмила Владимировна</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 3-509</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 7</span><span class="group-chip">Группа 8</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №15</span></div></div>
+      <h3>ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Гордеев Алексей Владимирович, Васильев Алексей Львович</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 2-221, 2-223, 1-002, 1-004</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 9</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №16</span></div></div>
+      <h3>СТУДЕНЧЕСКИЙ КВАРТАЛ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Лазарева Анастасия Владимировна, УНИКАЛЬНЫЕ ЗДАНИЯ В РОССИИ</span></li><li><span>Помазов Артем Павлович</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 1-110</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 10</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №17</span></div></div>
+      <h3>ПОСТРОЙ СВОЙ ВЫСОТНЫЙ ДОМ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Хряпченкова Ирина Николаевна</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 6-606,<br>цоколь 6 корпуса</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 11</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №18</span></div></div>
+      <h3>ДЕЛОВАЯ ИГРА &quot;Тендер: Битва за объект&quot; от СНО И СМУ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Ситникова Анна Константиновна</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория Точка Урбан 1,0</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 12</span><span class="group-chip">Группа 13</span></div></div></div>
+    </article></div>
+    </section><section class="slot">
+      <aside class="slot-time">
+        <span class="time">12:20-13:20</span>
+        <span class="count">2 активности</span>
+      </aside>
+      <div class="cards"><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Экскурсия</span></div></div>
+      <h3>Экскурсия на строительный объект НЕЙМАРК</h3>
+      <div class="meta"></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Экскурсия</span></div></div>
+      <h3>Экскурсия на строительный объект ННДК</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>8 корпус</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 5</span></div></div></div>
+    </article></div>
+    </section></div>
+    </section>
+  </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
