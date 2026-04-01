@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Мастер-классы — интерактивное расписание</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: rgba(255,255,255,0.82);
+      --panel-solid: #ffffff;
+      --line: #dde3ee;
+      --text: #18324b;
+      --muted: #5f7188;
+      --primary: #eea875;
+      --primary-dark: #cf7e47;
+      --primary-soft: #fff1e7;
+      --accent: #385b8c;
+      --shadow: 0 14px 40px rgba(24, 50, 75, 0.09);
+      --radius: 24px;
+      --radius-sm: 16px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(238, 168, 117, 0.22), transparent 32%),
+        radial-gradient(circle at top right, rgba(56, 91, 140, 0.14), transparent 28%),
+        linear-gradient(180deg, #fbfcfe 0%, #f4f7fb 38%, #eef3f9 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .shell {
+      width: min(1440px, 100%);
+      margin: 0 auto;
+      padding: 28px 16px 56px;
+    }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.7);
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.92), rgba(255,255,255,0.72)),
+        linear-gradient(135deg, rgba(238,168,117,0.14), rgba(56,91,140,0.12));
+      backdrop-filter: blur(16px);
+      border-radius: 32px;
+      box-shadow: var(--shadow);
+      padding: 28px;
+      margin-bottom: 18px;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -80px -80px auto;
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(238,168,117,0.35), transparent 66%);
+      pointer-events: none;
+    }
+    .hero-top {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: rgba(56, 91, 140, 0.09);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 14px 0 8px;
+      font-size: clamp(2rem, 4vw, 3.3rem);
+      line-height: 1.02;
+      letter-spacing: -0.04em;
+    }
+    .hero p {
+      margin: 0;
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 1.02rem;
+      line-height: 1.6;
+    }
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 22px;
+    }
+    .mini-card {
+      background: rgba(255,255,255,0.82);
+      border: 1px solid rgba(221, 227, 238, 0.9);
+      border-radius: 20px;
+      padding: 16px 18px;
+    }
+    .mini-card .label {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+    .mini-card strong {
+      display: block;
+      font-size: 1.35rem;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.7);
+      backdrop-filter: blur(16px);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+    .panel h2 {
+      margin: 0 0 14px;
+      font-size: 1rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .day-tabs {
+      display: flex;
+      gap: 10px;
+      overflow: auto;
+      padding-bottom: 4px;
+      scrollbar-width: thin;
+    }
+    .day-tabs button {
+      border: 0;
+      border-radius: 18px;
+      padding: 14px 18px;
+      background: #fff;
+      color: var(--text);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: inset 0 0 0 1px var(--line);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+    }
+    .day-tabs button:hover {
+      transform: translateY(-1px);
+      box-shadow: inset 0 0 0 1px rgba(207,126,71,0.35), 0 6px 16px rgba(24,50,75,0.08);
+    }
+    .day-tabs button.active {
+      background: linear-gradient(135deg, var(--primary), #f4ba92);
+      color: #532d15;
+      box-shadow: 0 10px 20px rgba(238, 168, 117, 0.28);
+    }
+    .search-wrap {
+      display: grid;
+      gap: 12px;
+    }
+    .search-box {
+      position: relative;
+    }
+    .search-box input {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 18px;
+      padding: 15px 18px 15px 48px;
+      font: inherit;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .search-box input:focus {
+      border-color: rgba(207,126,71,0.75);
+      box-shadow: 0 0 0 4px rgba(238,168,117,0.16);
+    }
+    .search-box svg {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      opacity: 0.58;
+    }
+    .filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .filters button {
+      border: 0;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: #fff;
+      color: var(--muted);
+      font: inherit;
+      font-weight: 700;
+      box-shadow: inset 0 0 0 1px var(--line);
+      transition: all 0.2s ease;
+    }
+    .filters button.active {
+      background: rgba(56,91,140,0.1);
+      color: var(--accent);
+      box-shadow: inset 0 0 0 1px rgba(56,91,140,0.28);
+    }
+    .day-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .summary-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      min-width: 0;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.86);
+      border: 1px solid rgba(221,227,238,0.92);
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+    .summary-chip strong {
+      font-size: 1rem;
+    }
+    .main-panel {
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(255,255,255,0.75);
+      border-radius: 32px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+    .day-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: end;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+    .day-head h2 {
+      margin: 0;
+      font-size: clamp(1.65rem, 3vw, 2.35rem);
+      letter-spacing: -0.04em;
+    }
+    .day-head p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      max-width: 720px;
+      line-height: 1.55;
+    }
+    .audience-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: var(--primary-soft);
+      color: #6c3c1d;
+      font-weight: 800;
+      min-width: 0;
+      max-width: 100%;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .timeline {
+      display: grid;
+      gap: 18px;
+    }
+    .slot {
+      display: grid;
+      grid-template-columns: 170px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    .slot-time {
+      position: sticky;
+      top: 12px;
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(56,91,140,0.08), rgba(56,91,140,0.02));
+      border: 1px solid rgba(56,91,140,0.14);
+      padding: 16px;
+    }
+    .slot-time .time {
+      display: block;
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 6px;
+    }
+    .slot-time .count {
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(270px, 100%), 1fr));
+      gap: 14px;
+      min-width: 0;
+    }
+    .card {
+      position: relative;
+      overflow: hidden;
+      background: var(--panel-solid);
+      border: 1px solid rgba(221,227,238,0.92);
+      border-radius: 24px;
+      padding: 18px;
+      box-shadow: 0 8px 26px rgba(24,50,75,0.06);
+    }
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 4px;
+      background: linear-gradient(90deg, rgba(238,168,117,0.9), rgba(56,91,140,0.75));
+      opacity: 0.92;
+    }
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      background: rgba(56,91,140,0.08);
+      color: var(--accent);
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .badge.primary {
+      background: rgba(238,168,117,0.18);
+      color: #8d4e26;
+    }
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 1.14rem;
+      line-height: 1.3;
+      letter-spacing: -0.02em;
+    }
+    .meta {
+      display: grid;
+      gap: 12px;
+    }
+    .meta-block {
+      display: grid;
+      gap: 7px;
+    }
+    .meta-title {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+    .meta-list {
+      display: grid;
+      gap: 7px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .meta-list li {
+      display: flex;
+      align-items: start;
+      gap: 10px;
+      line-height: 1.45;
+    }
+    .meta-list svg {
+      width: 18px;
+      height: 18px;
+      flex: 0 0 18px;
+      margin-top: 1px;
+      opacity: 0.65;
+    }
+    .group-list {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .group-chip {
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: #f3f6fa;
+      border: 1px solid #e1e8f1;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #38506b;
+      max-width: 100%;
+    }
+    .empty {
+      border-radius: 28px;
+      background: rgba(255,255,255,0.88);
+      border: 1px dashed rgba(56,91,140,0.22);
+      padding: 28px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .footer-note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.55;
+      text-align: center;
+    }
+    .hero,
+    .panel,
+    .main-panel,
+    .mini-card,
+    .slot,
+    .slot-time,
+    .card,
+    .summary-chip {
+      max-width: 100%;
+    }
+    .hero-top > *,
+    .day-head > *,
+    .controls > *,
+    .mini-grid > *,
+    .slot > *,
+    .card-head > *,
+    .cards > *,
+    .day-summary > * {
+      min-width: 0;
+    }
+    .card h3,
+    .mini-card strong,
+    .summary-chip,
+    .summary-chip strong,
+    .meta-list li span,
+    .group-chip {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .meta,
+    .meta-block,
+    .meta-list,
+    .meta-list li,
+    .group-list {
+      min-width: 0;
+    }
+    @media (max-width: 1080px) {
+      .controls {
+        grid-template-columns: 1fr;
+      }
+      .mini-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 760px) {
+      .shell {
+        width: 100%;
+        padding: 12px 10px 32px;
+      }
+      .hero, .panel, .main-panel {
+        border-radius: 24px;
+        padding: 16px;
+      }
+      .hero {
+        padding: 18px 16px;
+      }
+      .mini-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .day-tabs {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        overflow: visible;
+        padding-bottom: 0;
+      }
+      .day-tabs button {
+        width: 100%;
+        min-width: 0;
+        white-space: normal;
+        text-align: center;
+        padding: 12px 10px;
+        min-height: 52px;
+      }
+      .slot {
+        grid-template-columns: 1fr;
+      }
+      .slot-time {
+        position: static;
+        width: 100%;
+      }
+      .day-head {
+        align-items: start;
+      }
+      .cards {
+        grid-template-columns: 1fr;
+      }
+      .audience-badge {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+    @media (max-width: 520px) {
+      .mini-grid {
+        grid-template-columns: 1fr;
+      }
+      .day-summary {
+        grid-template-columns: 1fr;
+      }
+      .day-tabs {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <div class="hero-top">
+        <div>
+          <div class="eyebrow">Интерактивное расписание</div>
+          <h1>Мастер-классы</h1>
+        </div>
+      </div>
+      <div class="mini-grid" id="globalStats">
+<div class="mini-card">
+  <div class="label">Дней в расписании</div>
+  <strong>5</strong>
+</div>
+<div class="mini-card">
+  <div class="label">Всего карточек активностей</div>
+  <strong>127</strong>
+</div>
+<div class="mini-card">
+  <div class="label">Временных слотов</div>
+  <strong>29</strong>
+</div>
+<div class="mini-card">
+  <div class="label">Аудитория</div>
+  <strong style="font-size:1.05rem; line-height:1.3">Школьники • Техникум</strong>
+</div>
+</div>
+    </section>
+
+    <section class="controls">
+      <div class="panel">
+        <h2>Выберите день</h2>
+        <div class="day-tabs" id="dayTabs"><button class="active" data-day-index="0">6 апреля</button><button class="" data-day-index="1">7 апреля</button><button class="" data-day-index="2">8 апреля</button><button class="" data-day-index="3">9 апреля</button><button class="" data-day-index="4">10 апреля</button></div>
+      </div>
+      <div class="panel">
+        <h2>Поиск и фильтры</h2>
+        <div class="search-wrap">
+          <label class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"></circle>
+              <path d="M20 20l-3.5-3.5"></path>
+            </svg>
+            <input id="searchInput" type="search" placeholder="Например: мост, экскурсия, ОКО, группа 5" />
+          </label>
+          <div class="filters" id="kindFilters"><button class="active" data-kind="all">Все</button><button class="" data-kind="Регистрация">Регистрация</button><button class="" data-kind="Открытие">Открытие</button><button class="" data-kind="Площадка">Площадки</button><button class="" data-kind="Перерыв">Перерыв</button><button class="" data-kind="Экскурсия">Экскурсии</button><button class="" data-kind="Квест">Квест</button><button class="" data-kind="Активность">Другое</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="main-panel">
+      <div class="day-head">
+        <div>
+          <h2 id="dayTitle">6 апреля</h2>
+        </div>
+        <div class="audience-badge" id="audienceBadge">Школьники</div>
+      </div>
+
+      <div class="day-summary" id="daySummary">
+<div class="summary-chip"><strong>Школьники</strong><span>Аудитория дня</span></div>
+<div class="summary-chip"><strong>26</strong><span>Активностей по текущим фильтрам</span></div>
+<div class="summary-chip"><strong>6</strong><span>Временных блоков</span></div>
+<div class="summary-chip"><strong>08:30-09:00</strong><span>Старт дня</span></div>
+<div class="summary-chip"><strong>12:20-13:20</strong><span>Последний слот</span></div>
+</div>
+      <div class="timeline" id="timeline"><section class="slot">
+      <aside class="slot-time">
+        <span class="time">08:30-09:00</span>
+        <span class="count">1 активность</span>
+      </aside>
+      <div class="cards"><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Регистрация</span></div></div>
+      <h3>Регистрация участников форума</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Холл 1 корпуса ННГАСУ, ул. Ильинская, 65</span></li></ul></div></div>
+    </article></div>
+    </section><section class="slot">
+      <aside class="slot-time">
+        <span class="time">09:00-09:30</span>
+        <span class="count">1 активность</span>
+      </aside>
+      <div class="cards"><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Открытие</span></div></div>
+      <h3>Открытие форума. &quot;Роль строительной отрасли в развитие страны&quot;</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Трансляция в аудитории 228<br>(II корпус)</span></li><li><span>Актовый зал<br>(I корпус)</span></li></ul></div></div>
+    </article></div>
+    </section><section class="slot">
+      <aside class="slot-time">
+        <span class="time">09:30-10:30</span>
+        <span class="count">10 активностей</span>
+      </aside>
+      <div class="cards"><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №1</span></div></div>
+      <h3>ПОСТРОЙ СВОЙ ВЫСОТНЫЙ ДОМ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Хряпченкова Ирина Николаевна</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 6-606, цоколь 6 корпуса</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 1</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №2</span></div></div>
+      <h3>УНИКАЛЬНЫЕ ЗДАНИЯ В РОССИИ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Помазов Артем Павлович</span></li><li><span>СТУДЕНЧЕСКИЙ КВАРТАЛ</span></li><li><span>Лазарева Анастасия Владимировна</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 1-110</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 2</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №3</span></div></div>
+      <h3>ДЕЛОВАЯ ИГРА &quot;Тендер: Битва за объект&quot; от СНО И СМУ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Ситникова Анна Константиновна</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория Точка Урбан 1,0</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 3</span><span class="group-chip">Группа 4</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №4</span></div></div>
+      <h3>ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Гордеев Алексей Владимирович, Васильев Алексей Львович</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 2-221, 2-223, 1-002, 1-004</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 5</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №5</span></div></div>
+      <h3>СТАНЬ ЛАНДШАФТНЫМ АРХИТЕКТОРОМ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Лаврова Ольга Петровна</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 4 этаж библиотеки</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 6</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №6</span></div></div>
+      <h3>ДОВЕРЯЙ, НО ПРОВЕРЯЙ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Любимцева Ольга Львовна, Урявина Людмила Владимировна</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 3-509</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 7</span><span class="group-chip">Группа 8</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №7</span></div></div>
+      <h3>СТУДЕНЧЕСКИЙ КВАРТАЛ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Лазарева Анастасия Владимировна</span></li><li><span>ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ</span></li><li><span>Козлов Евгений Сергеевич</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>5 корпус, 8 корпус</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 9</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №8</span></div></div>
+      <h3>КАК СДЕЛАТЬ ПРАВИЛЬНЫЙ ВЫБОР АО &quot;ОКО&quot;</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 2-228</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 10</span><span class="group-chip">Группа 11</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №9</span></div></div>
+      <h3>БЕЗОПАСНО ОБ ОПАСНОМ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Макаров Павел Вячеславович, Котик Виталий Сергеевич</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 1-401в</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 12</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №10</span></div></div>
+      <h3>ПОСМОТРИ НА ЗЕМЛЮ С ВЫСОТЫ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Чечин Андрей Вячепславович</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 5-403</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 13</span></div></div></div>
+    </article></div>
+    </section><section class="slot">
+      <aside class="slot-time">
+        <span class="time">10:30-11:00</span>
+        <span class="count">1 активность</span>
+      </aside>
+      <div class="cards"><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Перерыв</span></div></div>
+      <h3>Чайная пауза</h3>
+      <div class="meta"></div>
+    </article></div>
+    </section><section class="slot">
+      <aside class="slot-time">
+        <span class="time">11:10-12:10</span>
+        <span class="count">11 активностей</span>
+      </aside>
+      <div class="cards"><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №11</span></div></div>
+      <h3>ДЕЛОВАЯ ИГРА ОТ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>МИНГРАД НИЖЕГОРОДСКОЙ ОБЛАСТИ</span></li><li><span>Яковлев Василий Владимирович</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 2-327</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 1</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №12</span></div></div>
+      <h3>ДЕЛОВАЯ ИГРА ОТ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>МИНГРАД НИЖЕГОРОДСКОЙ ОБЛАСТИ</span></li><li><span>Яковлев Василий Владимирович</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 2-327</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 2</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Экскурсия</span><span class="badge">Группа 3</span></div></div>
+      <h3>Экскурсия на строительный объект</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>ОЗСК</span></li></ul></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Экскурсия</span><span class="badge">Группа 4</span></div></div>
+      <h3>Экскурсия на строительный объект</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Ледовая арена</span></li></ul></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №4</span></div></div>
+      <h3>ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Козлов Евгений Сергеевич</span></li></ul></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №13</span></div></div>
+      <h3>СТРОИМ ЗДАНИЕ С ВЕТЕРКОМ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Хазов Павел Алексеевич</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 2-327</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 6</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №14</span></div></div>
+      <h3>ДЕЛАЙ. ИЗМЕРЬ. ОЦЕНИ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Любимцева Ольга Львовна, Урявина Людмила Владимировна</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 3-509</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 7</span><span class="group-chip">Группа 8</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №15</span></div></div>
+      <h3>ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Гордеев Алексей Владимирович, Васильев Алексей Львович</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 2-221, 2-223, 1-002, 1-004</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 9</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №16</span></div></div>
+      <h3>СТУДЕНЧЕСКИЙ КВАРТАЛ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Лазарева Анастасия Владимировна, УНИКАЛЬНЫЕ ЗДАНИЯ В РОССИИ</span></li><li><span>Помазов Артем Павлович</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 1-110</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 10</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №17</span></div></div>
+      <h3>ПОСТРОЙ СВОЙ ВЫСОТНЫЙ ДОМ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Хряпченкова Ирина Николаевна</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория 6-606,<br>цоколь 6 корпуса</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 11</span></div></div></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Площадка</span><span class="badge">Интерактивная площадка №18</span></div></div>
+      <h3>ДЕЛОВАЯ ИГРА &quot;Тендер: Битва за объект&quot; от СНО И СМУ</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Детали</div><ul class="meta-list"><li><span>Ситникова Анна Константиновна</span></li></ul></div><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>Аудитория Точка Урбан 1,0</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 12</span><span class="group-chip">Группа 13</span></div></div></div>
+    </article></div>
+    </section><section class="slot">
+      <aside class="slot-time">
+        <span class="time">12:20-13:20</span>
+        <span class="count">2 активности</span>
+      </aside>
+      <div class="cards"><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Экскурсия</span></div></div>
+      <h3>Экскурсия на строительный объект НЕЙМАРК</h3>
+      <div class="meta"></div>
+    </article><article class="card">
+      <div class="card-head"><div class="badges"><span class="badge primary">Экскурсия</span></div></div>
+      <h3>Экскурсия на строительный объект ННДК</h3>
+      <div class="meta"><div class="meta-block"><div class="meta-title">Место</div><ul class="meta-list"><li><span>8 корпус</span></li></ul></div><div class="meta-block"><div class="meta-title">Группы</div><div class="group-list"><span class="group-chip">Группа 5</span></div></div></div>
+    </article></div>
+    </section></div>
+    </section>
+  </div>
+
+  <script>
+    const scheduleData = [{"date": "6 апреля", "audience": "Школьники", "slots": [{"time": "08:30-09:00", "events": [{"time": "08:30-09:00", "col": 2, "row": 3, "label": "", "title": "Регистрация участников форума", "extra_lines": [], "locations": ["Холл 1 корпуса ННГАСУ, ул. Ильинская, 65"], "groups": [], "kind": "Регистрация", "title_raw": "Регистрация участников форума"}]}, {"time": "09:00-09:30", "events": [{"time": "09:00-09:30", "col": 2, "row": 5, "label": "", "title": "Открытие форума. \"Роль строительной отрасли в развитие страны\"", "extra_lines": [], "locations": ["Трансляция в аудитории 228\n(II корпус)", "Актовый зал\n(I корпус)"], "groups": [], "kind": "Открытие", "title_raw": "Открытие форума. \"Роль строительной отрасли в развитие страны\""}]}, {"time": "09:30-10:30", "events": [{"time": "09:30-10:30", "col": 2, "row": 7, "label": "Интерактивная площадка №1", "title": "ПОСТРОЙ СВОЙ ВЫСОТНЫЙ ДОМ", "extra_lines": ["Хряпченкова Ирина Николаевна"], "locations": ["Аудитория 6-606, цоколь 6 корпуса"], "groups": ["Группа 1"], "kind": "Площадка", "title_raw": "Интерактивная площадка №1\nПОСТРОЙ СВОЙ ВЫСОТНЫЙ ДОМ\nХряпченкова Ирина Николаевна"}, {"time": "09:30-10:30", "col": 3, "row": 7, "label": "Интерактивная площадка №2", "title": "УНИКАЛЬНЫЕ ЗДАНИЯ В РОССИИ", "extra_lines": ["Помазов Артем Павлович", "СТУДЕНЧЕСКИЙ КВАРТАЛ", "Лазарева Анастасия Владимировна"], "locations": ["Аудитория 1-110"], "groups": ["Группа 2"], "kind": "Площадка", "title_raw": "Интерактивная площадка №2\nУНИКАЛЬНЫЕ ЗДАНИЯ В РОССИИ\nПомазов Артем Павлович,\nСТУДЕНЧЕСКИЙ КВАРТАЛ\nЛазарева Анастасия Владимировна"}, {"time": "09:30-10:30", "col": 4, "row": 7, "label": "Интерактивная площадка №3", "title": "ДЕЛОВАЯ ИГРА \"Тендер: Битва за объект\" от СНО И СМУ", "extra_lines": ["Ситникова Анна Константиновна"], "locations": ["Аудитория Точка Урбан 1,0"], "groups": ["Группа 3", "Группа 4"], "kind": "Площадка", "title_raw": "Интерактивная площадка №3\nДЕЛОВАЯ ИГРА \"Тендер: Битва за объект\" от СНО И СМУ\nСитникова Анна Константиновна"}, {"time": "09:30-10:30", "col": 6, "row": 7, "label": "Интерактивная площадка №4", "title": "ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ", "extra_lines": ["Гордеев Алексей Владимирович, Васильев Алексей Львович"], "locations": ["Аудитория 2-221, 2-223, 1-002, 1-004"], "groups": ["Группа 5"], "kind": "Площадка", "title_raw": "Интерактивная площадка №4\nИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ\nГордеев Алексей Владимирович, Васильев Алексей Львович"}, {"time": "09:30-10:30", "col": 8, "row": 7, "label": "Интерактивная площадка №5", "title": "СТАНЬ ЛАНДШАФТНЫМ АРХИТЕКТОРОМ", "extra_lines": ["Лаврова Ольга Петровна"], "locations": ["Аудитория 4 этаж библиотеки"], "groups": ["Группа 6"], "kind": "Площадка", "title_raw": "Интерактивная площадка №5\nСТАНЬ ЛАНДШАФТНЫМ АРХИТЕКТОРОМ\nЛаврова Ольга Петровна"}, {"time": "09:30-10:30", "col": 9, "row": 7, "label": "Интерактивная площадка №6", "title": "ДОВЕРЯЙ, НО ПРОВЕРЯЙ", "extra_lines": ["Любимцева Ольга Львовна, Урявина Людмила Владимировна"], "locations": ["Аудитория 3-509"], "groups": ["Группа 7", "Группа 8"], "kind": "Площадка", "title_raw": "Интерактивная площадка №6 ДОВЕРЯЙ, НО ПРОВЕРЯЙ\nЛюбимцева Ольга Львовна, Урявина Людмила Владимировна"}, {"time": "09:30-10:30", "col": 11, "row": 7, "label": "Интерактивная площадка №7", "title": "СТУДЕНЧЕСКИЙ КВАРТАЛ", "extra_lines": ["Лазарева Анастасия Владимировна", "ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ", "Козлов Евгений Сергеевич"], "locations": ["5 корпус, 8 корпус"], "groups": ["Группа 9"], "kind": "Площадка", "title_raw": "Интерактивная площадка №7\nСТУДЕНЧЕСКИЙ КВАРТАЛ\nЛазарева Анастасия Владимировна,\nИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ\nКозлов Евгений Сергеевич"}, {"time": "09:30-10:30", "col": 12, "row": 7, "label": "Интерактивная площадка №8", "title": "КАК СДЕЛАТЬ ПРАВИЛЬНЫЙ ВЫБОР АО \"ОКО\"", "extra_lines": [], "locations": ["Аудитория 2-228"], "groups": ["Группа 10", "Группа 11"], "kind": "Площадка", "title_raw": "Интерактивная площадка №8\nКАК СДЕЛАТЬ ПРАВИЛЬНЫЙ ВЫБОР АО \"ОКО\""}, {"time": "09:30-10:30", "col": 14, "row": 7, "label": "Интерактивная площадка №9", "title": "БЕЗОПАСНО ОБ ОПАСНОМ", "extra_lines": ["Макаров Павел Вячеславович, Котик Виталий Сергеевич"], "locations": ["Аудитория 1-401в"], "groups": ["Группа 12"], "kind": "Площадка", "title_raw": "Интерактивная площадка №9 БЕЗОПАСНО ОБ ОПАСНОМ\nМакаров Павел Вячеславович, Котик Виталий Сергеевич"}, {"time": "09:30-10:30", "col": 15, "row": 7, "label": "Интерактивная площадка №10", "title": "ПОСМОТРИ НА ЗЕМЛЮ С ВЫСОТЫ", "extra_lines": ["Чечин Андрей Вячепславович"], "locations": ["Аудитория 5-403"], "groups": ["Группа 13"], "kind": "Площадка", "title_raw": "Интерактивная площадка №10 ПОСМОТРИ НА ЗЕМЛЮ С ВЫСОТЫ\nЧечин Андрей Вячепславович"}]}, {"time": "10:30-11:00", "events": [{"time": "10:30-11:00", "col": 2, "row": 12, "label": "", "title": "Чайная пауза", "extra_lines": [], "locations": [], "groups": [], "kind": "Перерыв", "title_raw": "Чайная пауза"}]}, {"time": "11:10-12:10", "events": [{"time": "11:10-12:10", "col": 2, "row": 14, "label": "Интерактивная площадка №11", "title": "ДЕЛОВАЯ ИГРА ОТ", "extra_lines": ["МИНГРАД НИЖЕГОРОДСКОЙ ОБЛАСТИ", "Яковлев Василий Владимирович"], "locations": ["Аудитория 2-327"], "groups": ["Группа 1"], "kind": "Площадка", "title_raw": "Интерактивная площадка №11\nДЕЛОВАЯ ИГРА ОТ\nМИНГРАД НИЖЕГОРОДСКОЙ ОБЛАСТИ\nЯковлев Василий Владимирович"}, {"time": "11:10-12:10", "col": 3, "row": 14, "label": "Интерактивная площадка №12", "title": "ДЕЛОВАЯ ИГРА ОТ", "extra_lines": ["МИНГРАД НИЖЕГОРОДСКОЙ ОБЛАСТИ", "Яковлев Василий Владимирович"], "locations": ["Аудитория 2-327"], "groups": ["Группа 2"], "kind": "Площадка", "title_raw": "Интерактивная площадка №12\nДЕЛОВАЯ ИГРА ОТ\nМИНГРАД НИЖЕГОРОДСКОЙ ОБЛАСТИ\nЯковлев Василий Владимирович"}, {"time": "11:10-12:10", "col": 4, "row": 14, "label": "Группа 3", "title": "Экскурсия на строительный объект", "extra_lines": ["ОЗСК"], "locations": [], "groups": [], "kind": "Экскурсия", "title_raw": "Группа 3 Экскурсия на строительный объект\nОЗСК"}, {"time": "11:10-12:10", "col": 5, "row": 14, "label": "Группа 4", "title": "Экскурсия на строительный объект", "extra_lines": ["Ледовая арена"], "locations": [], "groups": [], "kind": "Экскурсия", "title_raw": "Группа 4\nЭкскурсия на строительный объект\nЛедовая арена"}, {"time": "11:10-12:10", "col": 6, "row": 14, "label": "Интерактивная площадка №4", "title": "ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ", "extra_lines": ["Козлов Евгений Сергеевич"], "locations": [], "groups": [], "kind": "Площадка", "title_raw": "Интерактивная площадка №4\nИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ\nКозлов Евгений Сергеевич"}, {"time": "11:10-12:10", "col": 8, "row": 14, "label": "Интерактивная площадка №13", "title": "СТРОИМ ЗДАНИЕ С ВЕТЕРКОМ", "extra_lines": ["Хазов Павел Алексеевич"], "locations": ["Аудитория 2-327"], "groups": ["Группа 6"], "kind": "Площадка", "title_raw": "Интерактивная площадка №13\nСТРОИМ ЗДАНИЕ С ВЕТЕРКОМ\nХазов Павел Алексеевич"}, {"time": "11:10-12:10", "col": 9, "row": 14, "label": "Интерактивная площадка №14", "title": "ДЕЛАЙ. ИЗМЕРЬ. ОЦЕНИ", "extra_lines": ["Любимцева Ольга Львовна, Урявина Людмила Владимировна"], "locations": ["Аудитория 3-509"], "groups": ["Группа 7", "Группа 8"], "kind": "Площадка", "title_raw": "Интерактивная площадка №14\nДЕЛАЙ. ИЗМЕРЬ. ОЦЕНИ\nЛюбимцева Ольга Львовна, Урявина Людмила Владимировна"}, {"time": "11:10-12:10", "col": 11, "row": 14, "label": "Интерактивная площадка №15", "title": "ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ", "extra_lines": ["Гордеев Алексей Владимирович, Васильев Алексей Львович"], "locations": ["Аудитория 2-221, 2-223, 1-002, 1-004"], "groups": ["Группа 9"], "kind": "Площадка", "title_raw": "Интерактивная площадка №15\nИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ\nГордеев Алексей Владимирович, Васильев Алексей Львович"}, {"time": "11:10-12:10", "col": 12, "row": 14, "label": "Интерактивная площадка №16", "title": "СТУДЕНЧЕСКИЙ КВАРТАЛ", "extra_lines": ["Лазарева Анастасия Владимировна, УНИКАЛЬНЫЕ ЗДАНИЯ В РОССИИ", "Помазов Артем Павлович"], "locations": ["Аудитория 1-110"], "groups": ["Группа 10"], "kind": "Площадка", "title_raw": "Интерактивная площадка №16\nСТУДЕНЧЕСКИЙ КВАРТАЛ\nЛазарева Анастасия Владимировна, УНИКАЛЬНЫЕ ЗДАНИЯ В РОССИИ\nПомазов Артем Павлович"}, {"time": "11:10-12:10", "col": 13, "row": 14, "label": "Интерактивная площадка №17", "title": "ПОСТРОЙ СВОЙ ВЫСОТНЫЙ ДОМ", "extra_lines": ["Хряпченкова Ирина Николаевна"], "locations": ["Аудитория 6-606,\nцоколь 6 корпуса"], "groups": ["Группа 11"], "kind": "Площадка", "title_raw": "Интерактивная площадка №17\nПОСТРОЙ СВОЙ ВЫСОТНЫЙ ДОМ\nХряпченкова Ирина Николаевна"}, {"time": "11:10-12:10", "col": 14, "row": 14, "label": "Интерактивная площадка №18", "title": "ДЕЛОВАЯ ИГРА \"Тендер: Битва за объект\" от СНО И СМУ", "extra_lines": ["Ситникова Анна Константиновна"], "locations": ["Аудитория Точка Урбан 1,0"], "groups": ["Группа 12", "Группа 13"], "kind": "Площадка", "title_raw": "Интерактивная площадка №18\nДЕЛОВАЯ ИГРА \"Тендер: Битва за объект\" от СНО И СМУ\nСитникова Анна Константиновна"}]}, {"time": "12:20-13:20", "events": [{"time": "12:20-13:20", "col": 3, "row": 17, "label": "", "title": "Экскурсия на строительный объект НЕЙМАРК", "extra_lines": [], "locations": [], "groups": [], "kind": "Экскурсия", "title_raw": "Экскурсия на строительный объект НЕЙМАРК"}, {"time": "12:20-13:20", "col": 6, "row": 19, "label": "", "title": "Экскурсия на строительный объект ННДК", "extra_lines": [], "locations": ["8 корпус"], "groups": ["Группа 5"], "kind": "Экскурсия", "title_raw": "Экскурсия на строительный объект ННДК"}]}], "activity_count": 26, "slot_count": 6, "first_time": "08:30-09:00"}, {"date": "7 апреля", "audience": "Школьники", "slots": [{"time": "08:30-09:00", "events": [{"time": "08:30-09:00", "col": 2, "row": 3, "label": "", "title": "Регистрация участников форума", "extra_lines": [], "locations": ["Холл 1 корпуса ННГАСУ, ул. Ильинская, 65"], "groups": [], "kind": "Регистрация", "title_raw": "Регистрация участников форума"}]}, {"time": "09:00-09:30", "events": [{"time": "09:00-09:30", "col": 2, "row": 5, "label": "", "title": "Открытие форума. \"Роль строительной отрасли в развитие страны\"", "extra_lines": [], "locations": ["Трансляция в аудитории 228\n(II корпус)", "Актовый зал\n(I корпус)"], "groups": [], "kind": "Открытие", "title_raw": "Открытие форума. \"Роль строительной отрасли в развитие страны\""}]}, {"time": "09:30-10:30", "events": [{"time": "09:30-10:30", "col": 2, "row": 7, "label": "Интерактивная площадка №1", "title": "ТИМ", "extra_lines": ["Урявина Людмила Владимировна"], "locations": ["Аудитория 6-902"], "groups": ["Группа 1"], "kind": "Площадка", "title_raw": "Интерактивная площадка №1\nТИМ\nУрявина Людмила Владимировна"}, {"time": "09:30-10:30", "col": 3, "row": 7, "label": "Интерактивная площадка №2", "title": "ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ", "extra_lines": ["Козлов Евгений Сергеевич", "СТУДЕНЧЕСКИЙ КВАРТАЛ", "Лазарева Анастасия Владимировна"], "locations": ["8 корпус , 5 корпус"], "groups": ["Группа 2"], "kind": "Площадка", "title_raw": "Интерактивная площадка №2\nИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ\nКозлов Евгений Сергеевич,\nСТУДЕНЧЕСКИЙ КВАРТАЛ\nЛазарева Анастасия Владимировна"}, {"time": "09:30-10:30", "col": 4, "row": 7, "label": "Интерактивная площадка №3", "title": "БЕЗОПАСНО ОБ ОПАСНОМ", "extra_lines": ["Макаров Павел Вячеславович, Котик Виталий Сергеевич"], "locations": ["Аудитория 1-401в"], "groups": ["Группа 3"], "kind": "Площадка", "title_raw": "Интерактивная площадка №3 БЕЗОПАСНО ОБ ОПАСНОМ\nМакаров Павел Вячеславович, Котик Виталий Сергеевич"}, {"time": "09:30-10:30", "col": 5, "row": 7, "label": "Интерактивная площадка №4", "title": "ПОСТРОЙ СВОЙ МОСТ", "extra_lines": ["Шкода Ирина Васильевна"], "locations": ["Аудитория 2-327"], "groups": ["Группа 4"], "kind": "Площадка", "title_raw": "Интерактивная площадка №4 ПОСТРОЙ СВОЙ МОСТ\nШкода Ирина Васильевна"}, {"time": "09:30-10:30", "col": 6, "row": 7, "label": "Интерактивная площадка №5", "title": "ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ", "extra_lines": ["Гордеев Алексей Владимирович, Васильев Алексей Львович"], "locations": ["Аудитория 2-221, 2-223, 1-002, 1-004"], "groups": ["Группа 5"], "kind": "Площадка", "title_raw": "Интерактивная площадка №5\nИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ\nГордеев Алексей Владимирович, Васильев Алексей Львович"}, {"time": "09:30-10:30", "col": 8, "row": 7, "label": "Интерактивная площадка №6", "title": "ПОСТРОЙ СВОЙ ВЫСОТНЫЙ ДОМ", "extra_lines": ["Хряпченкова Ирина Николаевна"], "locations": ["Аудитория 6-606, цоколь 6 корпуса"], "groups": ["Группа 6"], "kind": "Площадка", "title_raw": "Интерактивная площадка №6\nПОСТРОЙ СВОЙ ВЫСОТНЫЙ ДОМ\nХряпченкова Ирина Николаевна"}, {"time": "09:30-10:30", "col": 9, "row": 7, "label": "Интерактивная площадка №7", "title": "ПОСМОТРИ НА ЗЕМЛЮ С ВЫСОТЫ", "extra_lines": ["Чечин Андрей Вячепславович"], "locations": ["Аудитория 5-403"], "groups": ["Группа 7"], "kind": "Площадка", "title_raw": "Интерактивная площадка №7 ПОСМОТРИ НА ЗЕМЛЮ С ВЫСОТЫ\nЧечин Андрей Вячепславович"}, {"time": "09:30-10:30", "col": 10, "row": 7, "label": "Интерактивная площадка №8", "title": "СТАНЬ ЛАНДШАФТНЫМ АРХИТЕКТОРОМ", "extra_lines": ["Лаврова Ольга Петровна"], "locations": ["Аудитория Точка Урбан 2,0"], "groups": ["Группа 8"], "kind": "Площадка", "title_raw": "Интерактивная площадка №8\nСТАНЬ ЛАНДШАФТНЫМ АРХИТЕКТОРОМ\nЛаврова Ольга Петровна"}, {"time": "09:30-10:30", "col": 11, "row": 7, "label": "Интерактивная площадка №9", "title": "ПОСТРОЙ СВОЙ МОСТ", "extra_lines": ["Шкода Ирина Васильевна"], "locations": ["Аудитория 2-327"], "groups": ["Группа 9"], "kind": "Площадка", "title_raw": "Интерактивная площадка №9 ПОСТРОЙ СВОЙ МОСТ\nШкода Ирина Васильевна"}, {"time": "09:30-10:30", "col": 12, "row": 7, "label": "Интерактивная площадка №10", "title": "ДЕЛОВАЯ ИГРА ОТ ЦЕНТРА КАРЬЕРЫ И РСО", "extra_lines": ["Зотова Екатерина Николаевна"], "locations": ["Аудитория Точка Урбан 1,0"], "groups": ["Группа 10"], "kind": "Площадка", "title_raw": "Интерактивная площадка №10 ДЕЛОВАЯ ИГРА ОТ ЦЕНТРА КАРЬЕРЫ И РСО\nЗотова Екатерина Николаевна"}, {"time": "09:30-10:30", "col": 13, "row": 7, "label": "Интерактивная площадка №10", "title": "ДЕЛОВАЯ ИГРА ОТ ЦЕНТРА КАРЬЕРЫ И РСО", "extra_lines": ["Зотова Екатерина Николаевна"], "locations": ["Аудитория Точка Урбан 1,0"], "groups": ["Группа 11", "Группа 12"], "kind": "Площадка", "title_raw": "Интерактивная площадка №10\nДЕЛОВАЯ ИГРА ОТ ЦЕНТРА КАРЬЕРЫ И РСО\nЗотова Екатерина Николаевна"}]}, {"time": "10:30-11:00", "events": [{"time": "10:30-11:00", "col": 2, "row": 12, "label": "", "title": "Чайная пауза", "extra_lines": [], "locations": [], "groups": [], "kind": "Перерыв", "title_raw": "Чайная пауза"}]}, {"time": "11:10-12:10", "events": [{"time": "11:10-12:10", "col": 2, "row": 14, "label": "Интерактивная площадка №11", "title": "ПОСТРОЙ СВОЙ ВЫСОТНЫЙ ДОМ", "extra_lines": ["Хряпченкова Ирина Николаевна"], "locations": ["Аудитория 6-606, цоколь 6 корпуса"], "groups": ["Группа 1"], "kind": "Площадка", "title_raw": "Интерактивная площадка №11\nПОСТРОЙ СВОЙ ВЫСОТНЫЙ ДОМ\nХряпченкова Ирина Николаевна"}, {"time": "11:10-12:10", "col": 3, "row": 14, "label": "Интерактивная площадка №2", "title": "ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ", "extra_lines": ["Гордеев Алексей Владимирович, Васильев Алексей Львович"], "locations": ["Аудитория 2-221, 2-223, 1-002, 1-004"], "groups": ["Группа 2"], "kind": "Площадка", "title_raw": "Интерактивная площадка №2\nИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ\nГордеев Алексей Владимирович, Васильев Алексей Львович"}, {"time": "11:10-12:10", "col": 4, "row": 14, "label": "Группа 3", "title": "Экскурсия на строительный объект", "extra_lines": [], "locations": [], "groups": [], "kind": "Экскурсия", "title_raw": "Группа 3 Экскурсия на строительный объект"}, {"time": "11:10-12:10", "col": 5, "row": 14, "label": "Группа 4", "title": "Экскурсия на строительный объект Неймарк Гагарина к 11:00", "extra_lines": [], "locations": [], "groups": [], "kind": "Экскурсия", "title_raw": "Группа 4\nЭкскурсия на строительный объект Неймарк Гагарина к 11:00"}, {"time": "11:10-12:10", "col": 6, "row": 14, "label": "Интерактивная площадка №5", "title": "СТУДЕНЧЕСКИЙ КВАРТАЛ", "extra_lines": ["Лазарева Анастасия Владимировна", "ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ", "Козлов Евгений Сергеевич"], "locations": [], "groups": [], "kind": "Площадка", "title_raw": "Интерактивная площадка №5\nСТУДЕНЧЕСКИЙ КВАРТАЛ\nЛазарева Анастасия Владимировна,\nИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ\nКозлов Евгений Сергеевич"}, {"time": "11:10-12:10", "col": 8, "row": 14, "label": "Интерактивная площадка №12", "title": "ДЕЛОВАЯ ИГРА ОТ ЦЕНТРА КАРЬЕРЫ И РСО", "extra_lines": ["Зотова Екатерина Николаевна"], "locations": ["Аудитория Точка Урбан 1,0"], "groups": ["Группа 6", "Группа 7"], "kind": "Площадка", "title_raw": "Интерактивная площадка №12\nДЕЛОВАЯ ИГРА ОТ ЦЕНТРА КАРЬЕРЫ И РСО\nЗотова Екатерина Николаевна"}, {"time": "11:10-12:10", "col": 10, "row": 14, "label": "Интерактивная площадка №14", "title": "ПОСТРОЙ СВОЙ МОСТ", "extra_lines": ["Шкода Ирина Васильевна"], "locations": ["Аудитория 1-317"], "groups": ["Группа 8"], "kind": "Площадка", "title_raw": "Интерактивная площадка №14\nПОСТРОЙ СВОЙ МОСТ\nШкода Ирина Васильевна"}, {"time": "11:10-12:10", "col": 10, "row": 21, "label": "", "title": "Экскурсия на строительный объект Стадион 71 школа", "extra_lines": [], "locations": ["Аудитория 1-317"], "groups": ["Группа 8"], "kind": "Экскурсия", "title_raw": "Экскурсия на строительный объект Стадион 71 школа"}, {"time": "11:10-12:10", "col": 11, "row": 14, "label": "Интерактивная площадка №15", "title": "СТРОИМ ЗДАНИЕ С ВЕТЕРКОМ", "extra_lines": ["Хазов Павел Алексеевич"], "locations": ["Аудитория 2-327"], "groups": ["Группа 9"], "kind": "Площадка", "title_raw": "Интерактивная площадка №15\nСТРОИМ ЗДАНИЕ С ВЕТЕРКОМ\nХазов Павел Алексеевич"}, {"time": "11:10-12:10", "col": 12, "row": 14, "label": "Интерактивная площадка №16", "title": "ИСПЫТАНИЕ СТРОИТЕЛЬНЫХ КОНСТРУКЦИЙ", "extra_lines": ["Лобов Дмитрий Михайлович"], "locations": ["Аудитория 1-102"], "groups": ["Группа 10"], "kind": "Площадка", "title_raw": "Интерактивная площадка №16\nИСПЫТАНИЕ СТРОИТЕЛЬНЫХ КОНСТРУКЦИЙ\nЛобов Дмитрий Михайлович"}, {"time": "11:10-12:10", "col": 13, "row": 14, "label": "Интерактивная площадка №17", "title": "МАСТЕР-КЛАСС ПО ОЧИСТКЕ ВОДЫ ОТ \"ОКО\", СТУДЕНЧЕСКИЙ КВАРТАЛ", "extra_lines": ["Лазарева Анастасия Владимировна"], "locations": ["Аудитория 1-213, 5 корпус"], "groups": ["Группа 11"], "kind": "Площадка", "title_raw": "Интерактивная площадка №17\nМАСТЕР-КЛАСС ПО ОЧИСТКЕ ВОДЫ ОТ \"ОКО\", СТУДЕНЧЕСКИЙ КВАРТАЛ\nЛазарева Анастасия Владимировна"}, {"time": "11:10-12:10", "col": 14, "row": 14, "label": "Интерактивная площадка №18", "title": "ВЫСТАВКА РАБОТ ЛАНДШАФТНЫХ АРХИТЕКТОРОВ", "extra_lines": ["Лаврова Ольга Петровна, МАСТЕР-КЛАСС ПО ОЧИСТКЕ ВОДЫ ОТ \"ОКО\""], "locations": ["5 корпус, Аудитория 1-213"], "groups": ["Группа 12"], "kind": "Площадка", "title_raw": "Интерактивная площадка №18\nВЫСТАВКА РАБОТ ЛАНДШАФТНЫХ АРХИТЕКТОРОВ\nЛаврова Ольга Петровна, МАСТЕР-КЛАСС ПО ОЧИСТКЕ ВОДЫ ОТ \"ОКО\""}]}, {"time": "12:20-13:20", "events": [{"time": "12:20-13:20", "col": 2, "row": 17, "label": "", "title": "Экскурсия на строительный объект", "extra_lines": [], "locations": [], "groups": [], "kind": "Экскурсия", "title_raw": "Экскурсия на строительный объект"}, {"time": "12:20-13:20", "col": 3, "row": 17, "label": "", "title": "Экскурсия на строительный объект НЕЙМАРК к 12:30", "extra_lines": [], "locations": [], "groups": [], "kind": "Экскурсия", "title_raw": "Экскурсия на строительный объект НЕЙМАРК к 12:30"}]}], "activity_count": 28, "slot_count": 6, "first_time": "08:30-09:00"}, {"date": "8 апреля", "audience": "Школьники", "slots": [{"time": "08:30-09:00", "events": [{"time": "08:30-09:00", "col": 2, "row": 3, "label": "", "title": "Регистрация участников форума", "extra_lines": [], "locations": ["Холл 1 корпуса ННГАСУ, ул. Ильинская, 65"], "groups": [], "kind": "Регистрация", "title_raw": "Регистрация участников форума"}]}, {"time": "09:00-09:30", "events": [{"time": "09:00-09:30", "col": 2, "row": 5, "label": "", "title": "Открытие форума. \"Роль строительной отрасли в развитие страны\"", "extra_lines": [], "locations": ["Трансляция в аудитории 228\n(II корпус)", "Актовый зал\n(I корпус)"], "groups": [], "kind": "Открытие", "title_raw": "Открытие форума. \"Роль строительной отрасли в развитие страны\""}]}, {"time": "09:30-10:30", "events": [{"time": "09:30-10:30", "col": 2, "row": 7, "label": "Интерактивная площадка №1", "title": "ИСПЫТАНИЕ СТРОИТЕЛЬНЫХ КОНСТРУКЦИЙ", "extra_lines": ["Лобов Дмитрий Михайлович"], "locations": ["Аудитория 1-102"], "groups": ["Группа 1"], "kind": "Площадка", "title_raw": "Интерактивная площадка №1\nИСПЫТАНИЕ СТРОИТЕЛЬНЫХ КОНСТРУКЦИЙ\nЛобов Дмитрий Михайлович"}, {"time": "09:30-10:30", "col": 3, "row": 7, "label": "Интерактивная площадка №6", "title": "ПОСТРОЙ СВОЙ ВЫСОТНЫЙ ДОМ", "extra_lines": ["Хряпченкова Ирина Николаевна"], "locations": ["Аудитория 6-606, цоколь 6 корпуса"], "groups": ["Группа 2"], "kind": "Площадка", "title_raw": "Интерактивная площадка №6\nПОСТРОЙ СВОЙ ВЫСОТНЫЙ ДОМ\nХряпченкова Ирина Николаевна"}, {"time": "09:30-10:30", "col": 4, "row": 7, "label": "Интерактивная площадка №2", "title": "ПОСМОТРИ НА ЗЕМЛЮ С ВЫСОТЫ", "extra_lines": ["Чечин Андрей Вячепславович"], "locations": ["Аудитория 5-403"], "groups": ["Группа 3"], "kind": "Площадка", "title_raw": "Интерактивная площадка №2 ПОСМОТРИ НА ЗЕМЛЮ С ВЫСОТЫ\nЧечин Андрей Вячепславович"}, {"time": "09:30-10:30", "col": 5, "row": 7, "label": "Интерактивная площадка №3", "title": "ВСЕ ОБО ВСЕМ", "extra_lines": [], "locations": ["Аудитория 1-318"], "groups": ["Группа 4"], "kind": "Площадка", "title_raw": "Интерактивная площадка №3\nВСЕ ОБО ВСЕМ"}, {"time": "09:30-10:30", "col": 6, "row": 7, "label": "Интерактивная площадка №3", "title": "МАСТЕР-КЛАСС ПО РАЗВИТИЮ ГОРОДА", "extra_lines": ["Лазарева Анастасия Владимировна"], "locations": ["Аудитория 1-317"], "groups": ["Группа 5"], "kind": "Площадка", "title_raw": "Интерактивная площадка №3\nМАСТЕР-КЛАСС ПО РАЗВИТИЮ ГОРОДА\nЛазарева Анастасия Владимировна"}, {"time": "09:30-10:30", "col": 8, "row": 7, "label": "Интерактивная площадка №4", "title": "БЕЗОПАСНО ОБ ОПАСНОМ", "extra_lines": ["Макаров Павел Вячеславович, Котик Виталий Сергеевич"], "locations": ["Аудитория 1-401в"], "groups": ["Группа 6"], "kind": "Площадка", "title_raw": "Интерактивная площадка №4\nБЕЗОПАСНО ОБ ОПАСНОМ\nМакаров Павел Вячеславович, Котик Виталий Сергеевич"}, {"time": "09:30-10:30", "col": 9, "row": 7, "label": "Интерактивная площадка №5", "title": "СТАНЬ ЛАНДШАФТНЫМ АРХИТЕКТОРОМ", "extra_lines": ["Лаврова Ольга Петровна"], "locations": ["Аудитория Точка Урбан 2,0"], "groups": ["Группа 7"], "kind": "Площадка", "title_raw": "Интерактивная площадка №5\nСТАНЬ ЛАНДШАФТНЫМ АРХИТЕКТОРОМ\nЛаврова Ольга Петровна"}, {"time": "09:30-10:30", "col": 10, "row": 7, "label": "Интерактивная площадка №6", "title": "ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ", "extra_lines": ["Грималовская Ирина Павловна", "ПОСЕЩЕНИЕ СТУДЕНЧЕСКОГО КВАРТАЛА", "Лазарева Анастасия Владимировна"], "locations": ["8 корпус , 5 корпус"], "groups": ["Группа 8"], "kind": "Площадка", "title_raw": "Интерактивная площадка №6\nИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ\nГрималовская Ирина Павловна\nПОСЕЩЕНИЕ СТУДЕНЧЕСКОГО КВАРТАЛА\nЛазарева Анастасия Владимировна"}, {"time": "09:30-10:30", "col": 11, "row": 7, "label": "Интерактивная площадка №6", "title": "ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ", "extra_lines": ["Соколов Михаил Михайлович, Васильев Алексей Львович"], "locations": ["Аудитория 2-221, 2-223, 1-002, 1-004"], "groups": ["Группа 9"], "kind": "Площадка", "title_raw": "Интерактивная площадка №6\nИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ\nСоколов Михаил Михайлович, Васильев Алексей Львович"}, {"time": "09:30-10:30", "col": 12, "row": 7, "label": "Интерактивная площадка №6", "title": "ПОСТРОЙ СВОЙ МОСТ", "extra_lines": ["Шкода Ирина Васильевна"], "locations": ["Аудитория 1-317"], "groups": ["Группа 10", "Группа 11"], "kind": "Площадка", "title_raw": "Интерактивная площадка №6\nПОСТРОЙ СВОЙ МОСТ\nШкода Ирина Васильевна"}, {"time": "09:30-10:30", "col": 14, "row": 7, "label": "Интерактивная площадка №6", "title": "ДЕЛОВАЯ ИГРА ОТ ЦЕНТРА КАРЬЕРЫ И РСО", "extra_lines": ["Зотова Екатерина Николаевна"], "locations": ["Аудитория Точка Урбан"], "groups": ["Группа 12", "Группа 13", "Группа 14"], "kind": "Площадка", "title_raw": "Интерактивная площадка №6\nДЕЛОВАЯ ИГРА ОТ ЦЕНТРА КАРЬЕРЫ И РСО\nЗотова Екатерина Николаевна"}]}, {"time": "10:30-11:00", "events": [{"time": "10:30-11:00", "col": 2, "row": 12, "label": "", "title": "Чайная пауза", "extra_lines": [], "locations": [], "groups": [], "kind": "Перерыв", "title_raw": "Чайная пауза"}]}, {"time": "11:10-12:10", "events": [{"time": "11:10-12:10", "col": 2, "row": 14, "label": "Группа 3", "title": "Экскурсия на строительный объект РОДМОН", "extra_lines": [], "locations": [], "groups": [], "kind": "Экскурсия", "title_raw": "Группа 3 Экскурсия на строительный объект РОДМОН"}, {"time": "11:10-12:10", "col": 3, "row": 14, "label": "Группа 3", "title": "Экскурсия на строительный объект Неймарк", "extra_lines": [], "locations": [], "groups": [], "kind": "Экскурсия", "title_raw": "Группа 3 Экскурсия на строительный объект Неймарк"}, {"time": "11:10-12:10", "col": 4, "row": 14, "label": "Группа 3", "title": "Экскурсия на строительный объект Ледовая арена", "extra_lines": [], "locations": [], "groups": [], "kind": "Экскурсия", "title_raw": "Группа 3 Экскурсия на строительный объект Ледовая арена"}, {"time": "11:10-12:10", "col": 5, "row": 14, "label": "Группа 4", "title": "Экскурсия на строительный объект Барминская", "extra_lines": [], "locations": [], "groups": [], "kind": "Экскурсия", "title_raw": "Группа 4\nЭкскурсия на строительный объект Барминская"}, {"time": "11:10-12:10", "col": 6, "row": 14, "label": "Интерактивная площадка №7", "title": "СТУДЕНЧЕСКИЙ КВАРТАЛ", "extra_lines": ["Лазарева Анастасия Владимировна", "МАСТЕР-КЛАСС ПО РАЗВИТИЮ ГОРОДА", "Лазарева Анастасия Владимировна"], "locations": [], "groups": [], "kind": "Площадка", "title_raw": "Интерактивная площадка №7\nСТУДЕНЧЕСКИЙ КВАРТАЛ\nЛазарева Анастасия Владимировна,\nМАСТЕР-КЛАСС ПО РАЗВИТИЮ ГОРОДА\nЛазарева Анастасия Владимировна"}, {"time": "11:10-12:10", "col": 8, "row": 14, "label": "Интерактивная площадка №6", "title": "ДЕЛОВАЯ ИГРА ОТ", "extra_lines": ["МИНГРАД НИЖЕГОРОДСКОЙ ОБЛАСТИ", "Яковлев Василий Владимирович"], "locations": ["Аудитория 2-327"], "groups": ["Группа 6", "Группа 7"], "kind": "Площадка", "title_raw": "Интерактивная площадка №6\nДЕЛОВАЯ ИГРА ОТ\nМИНГРАД НИЖЕГОРОДСКОЙ ОБЛАСТИ\nЯковлев Василий Владимирович"}, {"time": "11:10-12:10", "col": 10, "row": 14, "label": "Интерактивная площадка №6", "title": "ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ", "extra_lines": ["Соколов Михаил Михайлович, Васильев Алексей Львович"], "locations": ["Аудитория 2-221, 2-223, 1-002, 1-004"], "groups": ["Группа 8"], "kind": "Площадка", "title_raw": "Интерактивная площадка №6\nИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ\nСоколов Михаил Михайлович, Васильев Алексей Львович"}, {"time": "11:10-12:10", "col": 11, "row": 14, "label": "Интерактивная площадка №8", "title": "ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ", "extra_lines": ["Грималовская Ирина Павловна", "ПОСЕЩЕНИЕ СТУДЕНЧЕСКОГО КВАРТАЛА", "Лазарева Анастасия Владимировна"], "locations": ["8 корпус , 5 корпус"], "groups": ["Группа 9"], "kind": "Площадка", "title_raw": "Интерактивная площадка №8\nИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ\nГрималовская Ирина Павловна\nПОСЕЩЕНИЕ СТУДЕНЧЕСКОГО КВАРТАЛА\nЛазарева Анастасия Владимировна"}, {"time": "11:10-12:10", "col": 12, "row": 14, "label": "Интерактивная площадка №4", "title": "БЕЗОПАСНО ОБ ОПАСНОМ", "extra_lines": ["Макаров Павел Вячеславович, Котик Виталий Сергеевич"], "locations": ["Аудитория 1-401в"], "groups": ["Группа 10"], "kind": "Площадка", "title_raw": "Интерактивная площадка №4\nБЕЗОПАСНО ОБ ОПАСНОМ\nМакаров Павел Вячеславович, Котик Виталий Сергеевич"}, {"time": "11:10-12:10", "col": 13, "row": 14, "label": "Интерактивная площадка №10", "title": "СТРОИМ ЗДАНИЕ С ВЕТЕРКОМ", "extra_lines": ["Хазов Павел Алексеевич"], "locations": ["Аудитория 2-327"], "groups": ["Группа 11"], "kind": "Площадка", "title_raw": "Интерактивная площадка №10\nСТРОИМ ЗДАНИЕ С ВЕТЕРКОМ\nХазов Павел Алексеевич"}, {"time": "11:10-12:10", "col": 14, "row": 14, "label": "Интерактивная площадка №11", "title": "СТАНЬ ЛАНДШАФТНЫМ АРХИТЕКТОРОМ", "extra_lines": ["Лаврова Ольга Петровна"], "locations": ["Аудитория Точка урбан 2,0"], "groups": ["Группа 12"], "kind": "Площадка", "title_raw": "Интерактивная площадка №11\nСТАНЬ ЛАНДШАФТНЫМ АРХИТЕКТОРОМ\nЛаврова Ольга Петровна"}, {"time": "11:10-12:10", "col": 15, "row": 14, "label": "Интерактивная площадка №6", "title": "ПОСТРОЙ СВОЙ МОСТ", "extra_lines": ["Шкода Ирина Васильевна"], "locations": ["Аудитория 1-317"], "groups": ["Группа 13", "Группа 14"], "kind": "Площадка", "title_raw": "Интерактивная площадка №6\nПОСТРОЙ СВОЙ МОСТ\nШкода Ирина Васильевна"}]}], "activity_count": 26, "slot_count": 5, "first_time": "08:30-09:00"}, {"date": "9 апреля", "audience": "Техникум", "slots": [{"time": "08:30-09:00", "events": [{"time": "08:30-09:00", "col": 2, "row": 3, "label": "", "title": "Регистрация участников форума", "extra_lines": [], "locations": ["Холл 1 корпуса ННГАСУ, ул. Ильинская, 65"], "groups": [], "kind": "Регистрация", "title_raw": "Регистрация участников форума"}]}, {"time": "09:00-09:30", "events": [{"time": "09:00-09:30", "col": 2, "row": 5, "label": "", "title": "Открытие форума. \"Роль строительной отрасли в развитие страны\"", "extra_lines": [], "locations": ["Трансляция в аудитории 228\n(II корпус)", "Актовый зал\n(I корпус)"], "groups": [], "kind": "Открытие", "title_raw": "Открытие форума. \"Роль строительной отрасли в развитие страны\""}]}, {"time": "09:30-10:30", "events": [{"time": "09:30-10:30", "col": 2, "row": 7, "label": "Интерактивная площадка №1", "title": "МАСТЕР-КЛАСС \"МОТИВАЦИЯ\"", "extra_lines": ["АО \"ОКО\""], "locations": [], "groups": ["Группа 1"], "kind": "Площадка", "title_raw": "Интерактивная площадка №1\nМАСТЕР-КЛАСС \"МОТИВАЦИЯ\"\nАО \"ОКО\""}, {"time": "09:30-10:30", "col": 3, "row": 7, "label": "Интерактивная площадка №2", "title": "МАСТЕР-КЛАСС \"МОТИВАЦИЯ\" АО \"ОКО\"", "extra_lines": [], "locations": [], "groups": ["Группа 2"], "kind": "Площадка", "title_raw": "Интерактивная площадка №2\nМАСТЕР-КЛАСС \"МОТИВАЦИЯ\" АО \"ОКО\""}, {"time": "09:30-10:30", "col": 4, "row": 7, "label": "", "title": "КВЕСТ-ИГРА «ПОТЕРЯННЫЙ ЧЕРТЕЖ»", "extra_lines": [], "locations": [], "groups": ["Группа 3", "Группа 9"], "kind": "Квест", "title_raw": "КВЕСТ-ИГРА «ПОТЕРЯННЫЙ ЧЕРТЕЖ»"}, {"time": "09:30-10:30", "col": 6, "row": 7, "label": "Интерактивная площадка №3", "title": "ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ", "extra_lines": ["Соколов Михаил Михайлович, Васильев Алексей Львович"], "locations": ["Аудитория 2-221, 2-223, 1-002, 1-004"], "groups": ["Группа 5"], "kind": "Площадка", "title_raw": "Интерактивная площадка №3\nИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ\nСоколов Михаил Михайлович, Васильев Алексей Львович"}, {"time": "09:30-10:30", "col": 8, "row": 7, "label": "Интерактивная площадка №4", "title": "Интерактивная площадка №4", "extra_lines": [], "locations": [], "groups": ["Группа 6"], "kind": "Площадка", "title_raw": "Интерактивная площадка №4"}, {"time": "09:30-10:30", "col": 9, "row": 7, "label": "Интерактивная площадка №5", "title": "Интерактивная площадка №5", "extra_lines": [], "locations": [], "groups": ["Группа 7"], "kind": "Площадка", "title_raw": "Интерактивная площадка №5"}, {"time": "09:30-10:30", "col": 10, "row": 7, "label": "Интерактивная площадка №7", "title": "ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ", "extra_lines": ["Руин Алексей Евгеньевич", "ПОСЕЩЕНИЕ СТУДЕНЧЕСКОГО КВАРТАЛА", "Лазарева Анастасия Владимировна"], "locations": ["8 корпус , 5 корпус"], "groups": ["Группа 5"], "kind": "Площадка", "title_raw": "Интерактивная площадка №7\nИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ\nРуин Алексей Евгеньевич,\nПОСЕЩЕНИЕ СТУДЕНЧЕСКОГО КВАРТАЛА\nЛазарева Анастасия Владимировна"}]}, {"time": "10:30-11:00", "events": [{"time": "10:30-11:00", "col": 2, "row": 12, "label": "", "title": "Чайная пауза", "extra_lines": [], "locations": [], "groups": [], "kind": "Перерыв", "title_raw": "Чайная пауза"}]}, {"time": "11:10-12:10", "events": [{"time": "11:10-12:10", "col": 2, "row": 14, "label": "", "title": "КВЕСТ-ИГРА «ПОТЕРЯННЫЙ ЧЕРТЕЖ»", "extra_lines": [], "locations": [], "groups": ["Группа 1", "Группа 6"], "kind": "Квест", "title_raw": "КВЕСТ-ИГРА «ПОТЕРЯННЫЙ ЧЕРТЕЖ»"}, {"time": "11:10-12:10", "col": 4, "row": 14, "label": "Группа 3", "title": "\"Нагорная теплоцентраль\" ул. Ветеренарная 5 в 11:00", "extra_lines": [], "locations": [], "groups": [], "kind": "Активность", "title_raw": "Группа 3 \"Нагорная теплоцентраль\" ул. Ветеренарная 5 в 11:00"}, {"time": "11:10-12:10", "col": 5, "row": 14, "label": "Группа 4", "title": "Экскурсия на строительный объект", "extra_lines": [], "locations": [], "groups": [], "kind": "Экскурсия", "title_raw": "Группа 4\nЭкскурсия на строительный объект"}, {"time": "11:10-12:10", "col": 6, "row": 14, "label": "Интерактивная площадка №7", "title": "ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ", "extra_lines": ["Руин Алексей Евгеньевич", "ПОСЕЩЕНИЕ СТУДЕНЧЕСКОГО КВАРТАЛА", "Лазарева Анастасия Владимировна"], "locations": [], "groups": [], "kind": "Площадка", "title_raw": "Интерактивная площадка №7\nИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ\nРуин Алексей Евгеньевич,\nПОСЕЩЕНИЕ СТУДЕНЧЕСКОГО КВАРТАЛА\nЛазарева Анастасия Владимировна"}, {"time": "11:10-12:10", "col": 10, "row": 14, "label": "Интерактивная площадка №3", "title": "ИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ", "extra_lines": ["Соколов Михаил Михайлович, Васильев Алексей Львович"], "locations": ["Аудитория 2-221, 2-223, 1-002, 1-004"], "groups": ["Группа 5"], "kind": "Площадка", "title_raw": "Интерактивная площадка №3\nИНЖЕНЕРНЫЕ СИСТЕМЫ КОМФОРТА: ПРАКТИКУМ В ЛАБОРАТОРИЯХ ТГВ И ВИВ\nСоколов Михаил Михайлович, Васильев Алексей Львович"}, {"time": "11:10-12:10", "col": 11, "row": 14, "label": "Интерактивная площадка №8", "title": "Интерактивная площадка №8", "extra_lines": [], "locations": [], "groups": ["Группа 9"], "kind": "Площадка", "title_raw": "Интерактивная площадка №8"}, {"time": "11:10-12:10", "col": 12, "row": 14, "label": "Интерактивная площадка №9", "title": "Интерактивная площадка №9", "extra_lines": [], "locations": [], "groups": ["Группа 10"], "kind": "Площадка", "title_raw": "Интерактивная площадка №9"}, {"time": "11:10-12:10", "col": 13, "row": 14, "label": "Интерактивная площадка №10", "title": "Интерактивная площадка №10", "extra_lines": [], "locations": [], "groups": ["Группа 11"], "kind": "Площадка", "title_raw": "Интерактивная площадка №10"}, {"time": "11:10-12:10", "col": 14, "row": 14, "label": "Интерактивная площадка №11", "title": "Интерактивная площадка №11", "extra_lines": [], "locations": [], "groups": ["Группа 12"], "kind": "Площадка", "title_raw": "Интерактивная площадка №11"}]}, {"time": "12:20-13:20", "events": [{"time": "12:20-13:20", "col": 2, "row": 17, "label": "", "title": "Экскурсия на строительный объект", "extra_lines": [], "locations": ["8 корпус , 5 корпус"], "groups": ["Группа 5"], "kind": "Экскурсия", "title_raw": "Экскурсия на строительный объект"}]}], "activity_count": 20, "slot_count": 6, "first_time": "08:30-09:00"}, {"date": "10 апреля", "audience": "Техникум", "slots": [{"time": "08:30-09:00", "events": [{"time": "08:30-09:00", "col": 8, "row": 3, "label": "", "title": "Регистрация участников форума", "extra_lines": [], "locations": ["Холл 1 корпуса ННГАСУ, ул. Ильинская, 65"], "groups": [], "kind": "Регистрация", "title_raw": "Регистрация участников форума"}]}, {"time": "09:00-09:30", "events": [{"time": "09:00-09:30", "col": 2, "row": 3, "label": "", "title": "Регистрация участников форума", "extra_lines": [], "locations": ["Холл 1 корпуса ННГАСУ, ул. Ильинская, 65"], "groups": [], "kind": "Регистрация", "title_raw": "Регистрация участников форума"}]}, {"time": "09:30-10:30", "events": [{"time": "09:30-10:30", "col": 2, "row": 5, "label": "Интерактивная площадка №1", "title": "Мастер-класс \"Креативность, как важный мягкий навык для инженера\"", "extra_lines": ["АО \"ОКО\" 20-30 человек"], "locations": [], "groups": ["Группа 1"], "kind": "Площадка", "title_raw": "Интерактивная площадка №1\nМастер-класс \"Креативность, как важный мягкий навык для инженера\"\nАО \"ОКО\" 20-30 человек"}, {"time": "09:30-10:30", "col": 3, "row": 5, "label": "Интерактивная площадка №2", "title": "Мастер-класс и открытая лекция от ННДК", "extra_lines": [], "locations": [], "groups": ["Группа 2"], "kind": "Площадка", "title_raw": "Интерактивная площадка №2\nМастер-класс и открытая лекция от ННДК"}, {"time": "09:30-10:30", "col": 4, "row": 5, "label": "Интерактивная площадка №3", "title": "Интерактивная площадка №3", "extra_lines": [], "locations": [], "groups": ["Группа 2"], "kind": "Площадка", "title_raw": "Интерактивная площадка №3"}, {"time": "09:30-10:30", "col": 5, "row": 5, "label": "Интерактивная площадка №4", "title": "Интерактивная площадка №4", "extra_lines": [], "locations": [], "groups": ["Группа 2"], "kind": "Площадка", "title_raw": "Интерактивная площадка №4"}, {"time": "09:30-10:30", "col": 6, "row": 5, "label": "Интерактивная площадка №5", "title": "Интерактивная площадка №5", "extra_lines": [], "locations": [], "groups": ["Группа 5"], "kind": "Площадка", "title_raw": "Интерактивная площадка №5"}, {"time": "09:30-10:30", "col": 8, "row": 5, "label": "Интерактивная площадка №6", "title": "Интерактивная площадка №6", "extra_lines": [], "locations": [], "groups": ["Группа 6"], "kind": "Площадка", "title_raw": "Интерактивная площадка №6"}, {"time": "09:30-10:30", "col": 9, "row": 5, "label": "Интерактивная площадка №7", "title": "Интерактивная площадка №7", "extra_lines": [], "locations": [], "groups": ["Группа 7"], "kind": "Площадка", "title_raw": "Интерактивная площадка №7"}, {"time": "09:30-10:30", "col": 10, "row": 5, "label": "Интерактивная площадка №8", "title": "Интерактивная площадка №8", "extra_lines": [], "locations": [], "groups": ["Группа 8"], "kind": "Площадка", "title_raw": "Интерактивная площадка №8"}, {"time": "09:30-10:30", "col": 11, "row": 5, "label": "Интерактивная площадка №9", "title": "Интерактивная площадка №9", "extra_lines": [], "locations": [], "groups": ["Группа 6"], "kind": "Площадка", "title_raw": "Интерактивная площадка №9"}, {"time": "09:30-10:30", "col": 12, "row": 5, "label": "Интерактивная площадка №10", "title": "Интерактивная площадка №10", "extra_lines": [], "locations": [], "groups": ["Группа 6"], "kind": "Площадка", "title_raw": "Интерактивная площадка №10"}, {"time": "09:30-10:30", "col": 13, "row": 5, "label": "Интерактивная площадка №11", "title": "Интерактивная площадка №11", "extra_lines": [], "locations": [], "groups": ["Группа 6"], "kind": "Площадка", "title_raw": "Интерактивная площадка №11"}, {"time": "09:30-10:30", "col": 14, "row": 5, "label": "Интерактивная площадка №12", "title": "Интерактивная площадка №12", "extra_lines": [], "locations": [], "groups": ["Группа 6"], "kind": "Площадка", "title_raw": "Интерактивная площадка №12"}]}, {"time": "10:30-11:00", "events": [{"time": "10:30-11:00", "col": 2, "row": 10, "label": "", "title": "Чайная пауза", "extra_lines": [], "locations": [], "groups": [], "kind": "Перерыв", "title_raw": "Чайная пауза"}]}, {"time": "11:10-12:10", "events": [{"time": "11:10-12:10", "col": 2, "row": 12, "label": "Интерактивная площадка №13", "title": "Интерактивная площадка №13", "extra_lines": [], "locations": [], "groups": ["Группа 1"], "kind": "Площадка", "title_raw": "Интерактивная площадка №13"}, {"time": "11:10-12:10", "col": 4, "row": 12, "label": "Группа 3", "title": "\"Нагорная теплоцентраль\" ул. Ветеренарная 5 в 11:00", "extra_lines": [], "locations": [], "groups": [], "kind": "Активность", "title_raw": "Группа 3 \"Нагорная теплоцентраль\" ул. Ветеренарная 5 в 11:00"}, {"time": "11:10-12:10", "col": 5, "row": 12, "label": "Группа 4", "title": "Экскурсия на строительный объект", "extra_lines": [], "locations": [], "groups": [], "kind": "Экскурсия", "title_raw": "Группа 4\nЭкскурсия на строительный объект"}, {"time": "11:10-12:10", "col": 6, "row": 12, "label": "Интерактивная площадка №14", "title": "Интерактивная площадка №14", "extra_lines": [], "locations": [], "groups": [], "kind": "Площадка", "title_raw": "Интерактивная площадка №14"}, {"time": "11:10-12:10", "col": 8, "row": 12, "label": "Интерактивная площадка №15", "title": "Интерактивная площадка №15", "extra_lines": [], "locations": [], "groups": ["Группа 6"], "kind": "Площадка", "title_raw": "Интерактивная площадка №15"}, {"time": "11:10-12:10", "col": 9, "row": 12, "label": "Интерактивная площадка №16", "title": "Интерактивная площадка №16", "extra_lines": [], "locations": [], "groups": ["Группа 6", "Группа 7"], "kind": "Площадка", "title_raw": "Интерактивная площадка №16"}, {"time": "11:10-12:10", "col": 10, "row": 12, "label": "Интерактивная площадка №17", "title": "Интерактивная площадка №17", "extra_lines": [], "locations": [], "groups": ["Группа 6", "Группа 8"], "kind": "Площадка", "title_raw": "Интерактивная площадка №17"}, {"time": "11:10-12:10", "col": 11, "row": 12, "label": "Интерактивная площадка №18", "title": "Интерактивная площадка №18", "extra_lines": [], "locations": [], "groups": ["Группа 9"], "kind": "Площадка", "title_raw": "Интерактивная площадка №18"}, {"time": "11:10-12:10", "col": 12, "row": 12, "label": "Интерактивная площадка №19", "title": "Интерактивная площадка №19", "extra_lines": [], "locations": [], "groups": ["Группа 10"], "kind": "Площадка", "title_raw": "Интерактивная площадка №19"}, {"time": "11:10-12:10", "col": 13, "row": 12, "label": "Интерактивная площадка №20", "title": "Интерактивная площадка №20", "extra_lines": [], "locations": [], "groups": ["Группа 11"], "kind": "Площадка", "title_raw": "Интерактивная площадка №20"}, {"time": "11:10-12:10", "col": 14, "row": 12, "label": "Интерактивная площадка №21", "title": "Интерактивная площадка №21", "extra_lines": [], "locations": [], "groups": ["Группа 12"], "kind": "Площадка", "title_raw": "Интерактивная площадка №21"}]}, {"time": "12:20-13:20", "events": [{"time": "12:20-13:20", "col": 2, "row": 15, "label": "", "title": "Экскурсия на строительный объект", "extra_lines": [], "locations": [], "groups": ["Группа 5"], "kind": "Экскурсия", "title_raw": "Экскурсия на строительный объект"}]}], "activity_count": 27, "slot_count": 6, "first_time": "08:30-09:00"}];
+
+    const state = {
+      dayIndex: 0,
+      kind: 'all',
+      query: ''
+    };
+
+    const icons = {
+      location: `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 21s-6-4.4-6-10a6 6 0 1 1 12 0c0 5.6-6 10-6 10Z"></path>
+          <circle cx="12" cy="11" r="2.4"></circle>
+        </svg>`,
+      details: `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 6h16"></path>
+          <path d="M4 12h16"></path>
+          <path d="M4 18h10"></path>
+        </svg>`
+    };
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function normalize(value) {
+      return String(value || '')
+        .toLowerCase()
+        .replace(/ё/g, 'е')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function pluralActivities(n) {
+      const abs = Math.abs(n) % 100;
+      if (abs >= 11 && abs <= 14) return 'активностей';
+      const last = abs % 10;
+      if (last === 1) return 'активность';
+      if (last >= 2 && last <= 4) return 'активности';
+      return 'активностей';
+    }
+
+    function buildSearchIndex(event) {
+      return normalize([
+        event.kind,
+        event.label,
+        event.title,
+        ...(event.extra_lines || []),
+        ...(event.locations || []),
+        ...(event.groups || [])
+      ].join(' '));
+    }
+
+    function filteredEvents(day) {
+      const query = normalize(state.query);
+      return day.slots.map(slot => {
+        const events = slot.events.filter(event => {
+          const kindMatch = state.kind === 'all' || normalize(event.kind) === normalize(state.kind);
+          const queryMatch = !query || buildSearchIndex(event).includes(query);
+          return kindMatch && queryMatch;
+        });
+        return { ...slot, events };
+      }).filter(slot => slot.events.length);
+    }
+
+    function renderGlobalStats() {
+      const days = scheduleData.length;
+      const activities = scheduleData.reduce((sum, day) => sum + day.activity_count, 0);
+      const slots = scheduleData.reduce((sum, day) => sum + day.slot_count, 0);
+      const audiences = [...new Set(scheduleData.map(day => day.audience))].join(' • ');
+
+      document.getElementById('globalStats').innerHTML = `
+        <div class="mini-card">
+          <div class="label">Дней в расписании</div>
+          <strong>${days}</strong>
+        </div>
+        <div class="mini-card">
+          <div class="label">Всего карточек активностей</div>
+          <strong>${activities}</strong>
+        </div>
+        <div class="mini-card">
+          <div class="label">Временных слотов</div>
+          <strong>${slots}</strong>
+        </div>
+        <div class="mini-card">
+          <div class="label">Аудитория</div>
+          <strong style="font-size:1.05rem; line-height:1.3">${escapeHtml(audiences)}</strong>
+        </div>
+      `;
+    }
+
+    function renderDayTabs() {
+      const container = document.getElementById('dayTabs');
+      container.innerHTML = scheduleData.map((day, index) => `
+        <button class="${index === state.dayIndex ? 'active' : ''}" data-day-index="${index}">
+          ${escapeHtml(day.date)}
+        </button>
+      `).join('');
+
+      container.querySelectorAll('button').forEach(button => {
+        button.addEventListener('click', () => {
+          state.dayIndex = Number(button.dataset.dayIndex);
+          renderApp();
+        });
+      });
+    }
+
+    function renderKindFilters() {
+      const allKinds = ['all', ...Array.from(new Set(scheduleData.flatMap(day =>
+        day.slots.flatMap(slot => slot.events.map(event => event.kind))
+      )))];
+
+      const labels = {
+        all: 'Все',
+        'Площадка': 'Площадки',
+        'Экскурсия': 'Экскурсии',
+        'Регистрация': 'Регистрация',
+        'Открытие': 'Открытие',
+        'Перерыв': 'Перерыв',
+        'Квест': 'Квест',
+        'Активность': 'Другое'
+      };
+
+      const container = document.getElementById('kindFilters');
+      container.innerHTML = allKinds.map(kind => `
+        <button class="${state.kind === kind ? 'active' : ''}" data-kind="${escapeHtml(kind)}">
+          ${escapeHtml(labels[kind] || kind)}
+        </button>
+      `).join('');
+
+      container.querySelectorAll('button').forEach(button => {
+        button.addEventListener('click', () => {
+          state.kind = button.dataset.kind;
+          renderApp();
+        });
+      });
+    }
+
+    function cardMarkup(event) {
+      const badges = [
+        event.kind ? `<span class="badge primary">${escapeHtml(event.kind)}</span>` : '',
+        event.label ? `<span class="badge">${escapeHtml(event.label)}</span>` : ''
+      ].join('');
+
+      const detailsBlock = (event.extra_lines && event.extra_lines.length)
+        ? `
+          <div class="meta-block">
+            <div class="meta-title">Детали</div>
+            <ul class="meta-list">
+              ${event.extra_lines.map(line => `<li>${icons.details}<span>${escapeHtml(line)}</span></li>`).join('')}
+            </ul>
+          </div>`
+        : '';
+
+      const locationsBlock = (event.locations && event.locations.length)
+        ? `
+          <div class="meta-block">
+            <div class="meta-title">Место</div>
+            <ul class="meta-list">
+              ${event.locations.map(item => `<li>${icons.location}<span>${escapeHtml(item).replace(/\n/g, '<br>')}</span></li>`).join('')}
+            </ul>
+          </div>`
+        : '';
+
+      const groupsBlock = (event.groups && event.groups.length)
+        ? `
+          <div class="meta-block">
+            <div class="meta-title">Группы</div>
+            <div class="group-list">
+              ${event.groups.map(group => `<span class="group-chip">${escapeHtml(group)}</span>`).join('')}
+            </div>
+          </div>`
+        : '';
+
+      return `
+        <article class="card">
+          <div class="card-head">
+            <div class="badges">${badges}</div>
+          </div>
+          <h3>${escapeHtml(event.title || event.label || event.kind)}</h3>
+          <div class="meta">
+            ${detailsBlock}
+            ${locationsBlock}
+            ${groupsBlock}
+          </div>
+        </article>
+      `;
+    }
+
+    function renderDaySummary(day, slots) {
+      const visibleActivities = slots.reduce((sum, slot) => sum + slot.events.length, 0);
+      const firstTime = slots.length ? slots[0].time : '—';
+      const lastTime = slots.length ? slots[slots.length - 1].time : '—';
+
+      document.getElementById('daySummary').innerHTML = `
+        <div class="summary-chip"><strong>${escapeHtml(day.audience)}</strong><span>Аудитория дня</span></div>
+        <div class="summary-chip"><strong>${visibleActivities}</strong><span>Активностей по текущим фильтрам</span></div>
+        <div class="summary-chip"><strong>${slots.length}</strong><span>Временных блоков</span></div>
+        <div class="summary-chip"><strong>${escapeHtml(firstTime)}</strong><span>Старт дня</span></div>
+        <div class="summary-chip"><strong>${escapeHtml(lastTime)}</strong><span>Последний слот</span></div>
+      `;
+    }
+
+    function renderTimeline(day, slots) {
+      const container = document.getElementById('timeline');
+
+      if (!slots.length) {
+        container.innerHTML = `
+          <div class="empty">
+            <strong style="display:block; margin-bottom:8px; font-size:1.08rem; color:var(--text)">Ничего не найдено</strong>
+            Попробуйте сменить фильтр или очистить поисковый запрос.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = slots.map(slot => `
+        <section class="slot">
+          <aside class="slot-time">
+            <span class="time">${escapeHtml(slot.time)}</span>
+            <span class="count">${slot.events.length} ${pluralActivities(slot.events.length)}</span>
+          </aside>
+          <div class="cards">
+            ${slot.events.map(cardMarkup).join('')}
+          </div>
+        </section>
+      `).join('');
+    }
+
+    function renderApp() {
+      const day = scheduleData[state.dayIndex];
+      const slots = filteredEvents(day);
+
+      document.getElementById('dayTitle').textContent = day.date;
+      document.getElementById('audienceBadge').textContent = day.audience;
+
+      renderDayTabs();
+      renderKindFilters();
+      renderDaySummary(day, slots);
+      renderTimeline(day, slots);
+    }
+
+    document.getElementById('searchInput').addEventListener('input', (event) => {
+      state.query = event.target.value;
+      renderApp();
+    });
+
+    renderGlobalStats();
+    renderApp();
+  </script>
+</body>
+</html>
