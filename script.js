@@ -199,7 +199,6 @@ const scheduleData = [{"date": "6 апреля", "audience": "Школьники
       const lastTime = slots.length ? slots[slots.length - 1].time : '—';
 
       document.getElementById('daySummary').innerHTML = `
-        <div class="summary-chip"><strong>${escapeHtml(day.audience)}</strong><span>Аудитория дня</span></div>
         <div class="summary-chip"><strong>${visibleActivities}</strong><span>Активностей по текущим фильтрам</span></div>
         <div class="summary-chip"><strong>${slots.length}</strong><span>Временных блоков</span></div>
         <div class="summary-chip"><strong>${escapeHtml(firstTime)}</strong><span>Старт дня</span></div>
