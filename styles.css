@@ -303,7 +303,7 @@
       max-width: 720px;
       line-height: 1.55;
     }
-    .audience-badge-unused-unused {
+    .audience-badge {
       display: inline-flex;
       align-items: center;
       gap: 10px;
@@ -575,7 +575,7 @@
       .cards {
         grid-template-columns: 1fr;
       }
-      .audience-badge-unused-unused {
+      .audience-badge {
         width: 100%;
         justify-content: center;
       }
@@ -597,10 +597,3 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
-
-
-.day-meta {
-  margin: 8px 0 0;
-  color: var(--muted);
-  line-height: 1.55;
-}
